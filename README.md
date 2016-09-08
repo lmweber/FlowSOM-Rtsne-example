@@ -14,7 +14,7 @@ We [previously showed](https://github.com/lmweber/cytometry-clustering-compariso
 
 Rtsne is an R implementation of the popular t-SNE algorithm (see [t-SNE algorithm page](https://lvdmaaten.github.io/tsne/), [Rtsne development page](https://github.com/jkrijthe/Rtsne), and [Rtsne package on CRAN](https://cran.r-project.org/web/packages/Rtsne/index.html)).
 
-The t-SNE algorithm projects high-dimensional data to 2 or 3 dimensions for visualization. This is conceptually similar to principal component analysis (PCA). The main difference is that the t-SNE algorithm is non-linear, making it much better suited for many types of biological data.
+The t-SNE algorithm projects high-dimensional data to 2 or 3 dimensions for visualization. This is conceptually similar to principal component analysis (PCA). However, the t-SNE algorithm is non-linear (while PCA is linear), making it much better suited for many types of biological data.
 
 On a t-SNE plot of flow or mass cytometry data, points "near" to each other can be interpreted as belonging to the same or similar cell populations. However, the precise distances in the plot are not meaningful, so care should be taken not to over-interpret the plot. The algorithm also has a random start, so unless a random seed is used (as in this example), each run will look slightly different.
 
