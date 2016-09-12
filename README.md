@@ -24,9 +24,9 @@ On a t-SNE plot of flow or mass cytometry data, points "near" to each other can 
 The repository contains the following files.
 
 - R code script: [FlowSOM_Rtsne_example.R](FlowSOM_Rtsne_example.R)
-- data file: [data/visne_marrow1.fcs](data/visne_marrow1.fcs)
+- data file: [data/Samusik_01_notransform.fcs](data/Samusik_01_notransform.fcs)
 - output plot file: [plots/FlowSOM_Rtsne_plot.pdf](plots/FlowSOM_Rtsne_plot.pdf)
-- output file with FlowSOM cluster labels: [results/cluster_labels_FlowSOM.txt](results/cluster_labels_FlowSOM.txt)
+- output file of FlowSOM cluster labels: [results/cluster_labels_FlowSOM.txt](results/cluster_labels_FlowSOM.txt)
 
 
 
