@@ -1,29 +1,28 @@
-#########################################################################################
-# Worked example showing how to use FlowSOM for clustering and Rtsne for visualization of
-# a mass cytometry (CyTOF) data set
+################################################################################
+# Worked example using FlowSOM for clustering and Rtsne for visualization of a 
+# high-dimensional mass cytometry (CyTOF) data set
 #
 # References:
 #
 # FlowSOM:
-# - van Gassen et al. (2015), "FlowSOM: Using self-organizing maps for visualization and 
-# interpretation of cytometry data", Cytometry Part A, 87/7, 636-645, 
+# - van Gassen et al. (2015), "FlowSOM: Using self-organizing maps for 
+# visualization and interpretation of cytometry data", Cytometry Part A, 
 # http://www.ncbi.nlm.nih.gov/pubmed/25573116
 # - Bioconductor package: http://www.ncbi.nlm.nih.gov/pubmed/25573116
 #
 # Rtsne:
-# - available from CRAN: https://cran.r-project.org/web/packages/Rtsne/index.html
+# - CRAN package: https://cran.r-project.org/web/packages/Rtsne/index.html
 # - additional details: https://github.com/jkrijthe/Rtsne
 #
 # Data set:
-# - Healthy human bone marrow data set "Marrow1" from Figure 1b in the following paper:
-# - Amir et al. (2013), "viSNE enables visualization of high dimensional single-cell data
-# and reveals phenotypic heterogeneity of leukemia", Nature Biotechnology, 
-# http://www.ncbi.nlm.nih.gov/pubmed/23685480
-# - Link to raw data: http://www.c2b2.columbia.edu/danapeerlab/html/viSNE-data.html 
-# (filename "visne_marrow1.fcs")
+# - We use "sample 01" from the following paper:
+# - Samusik et al. (2016), "Automated mapping of phenotype space with 
+# single-cell data", Nature Methods, http://www.ncbi.nlm.nih.gov/pubmed/27183440
+# - Data file (Samusik_01_notransform.fcs) is also available for download from 
+# https://flowrepository.org/id/FR-FCM-ZZPH
 #
 # Lukas Weber, September 2016
-#########################################################################################
+################################################################################
 
 
 # install packages (if not already installed)
@@ -52,42 +51,34 @@ library(ggplot2)
 ### LOAD AND PREPARE DATA ###
 #############################
 
-# load data using flowCore package (download from link above or data/ folder in this repository)
+# load data using flowCore package (download from link above or data/ folder in
+# GitHub repository for this example)
 
-filename <- "data/visne_marrow1.fcs"
+filename <- "data/Samusik_01_notransform.fcs"
 
-data_flowFrame <- flowCore::read.FCS(filename, transformation = FALSE, truncate_max_range = FALSE)
-data_flowFrame
-
-data <- flowCore::exprs(data_flowFrame)
-params <- flowCore::parameters(data_flowFrame)
-desc <- flowCore::description(data_flowFrame)
+data <- flowCore::exprs(flowCore::read.FCS(filename, transformation = FALSE, truncate_max_range = FALSE))
 
 head(data)
 dim(data)
 
 
-# select following protein expression columns to use in FlowSOM calculations:
-# CD11b, CD123, CD19, CD20, CD3, CD33, CD34, CD38, CD4, CD45, CD45RA, CD8, CD90
-# (see Amir et al. 2013, Supplementary Tables 1 and 2)
-
-cols_to_use <- c(11, 23, 10, 16, 7, 22, 14, 28, 12, 6, 8, 13, 30)
-unname(colnames(data))[cols_to_use]  # check
+# select protein marker columns to use for clustering
+marker_cols <- 9:47
 
 
 # apply arcsinh transformation
 
-cols_proteins <- 4:36
+# (with standard scale factor of 5 for CyTOF data; alternatively 150 for flow 
+# cytometry data; see Bendall et al. 2011, Science, Supplementary Figure S2)
 
 asinh_scale <- 5
-data[, cols_proteins] <- asinh(data[, cols_proteins] / asinh_scale)
+data[, marker_cols] <- asinh(data[, marker_cols] / asinh_scale)
 
 summary(data)
 
 
-# create flowFrame object (required as input format for FlowSOM)
-
-data_FlowSOM <- flowCore::flowFrame(exprs = data, parameters = params, description = desc)
+# create flowFrame object (required input format for FlowSOM)
+data_FlowSOM <- flowCore::flowFrame(data)
 
 
 
@@ -96,14 +87,12 @@ data_FlowSOM <- flowCore::flowFrame(exprs = data, parameters = params, descripti
 ### RUN FLOWSOM ###
 ###################
 
-# run initial steps in FlowSOM workflow (prior to meta-clustering)
-
 # set seed for reproducibility
 set.seed(123)
 
-# run FlowSOM
+# run FlowSOM (initial steps prior to meta-clustering)
 out <- FlowSOM::ReadInput(data_FlowSOM, transform = FALSE, scale = FALSE)
-out <- FlowSOM::BuildSOM(out, colsToUse = cols_to_use)
+out <- FlowSOM::BuildSOM(out, colsToUse = marker_cols)
 out <- FlowSOM::BuildMST(out)
 
 # optional visualization
@@ -112,13 +101,11 @@ FlowSOM::PlotStars(out)
 # extract cluster labels (pre meta-clustering) from output object
 labels_pre <- out$map$mapping[, 1]
 
+# specify final number of clusters for meta-clustering (can also be selected 
+# automatically, but this often does not perform well)
+k <- 40
 
-# run meta-clustering (final step in FlowSOM workflow)
-
-# set final number of clusters (can also be set automatically, but this does not perform 
-# well for many data sets)
-k <- 20
-
+# run meta-clustering
 set.seed(123)
 out <- FlowSOM::metaClustering_consensus(out$map$codes, k = k)
 
@@ -149,26 +136,20 @@ write.table(res, file = "results/cluster_labels_FlowSOM.txt",
 ### RUN RTSNE ###
 #################
 
-# subsample points for plot (required for runtime)
-
+# subsampling (required due to runtime)
 n_sub <- 10000
 
 set.seed(123)
 ix <- sample(1:length(labels), n_sub)
 
-
 # prepare data for Rtsne (matrix format required)
-
-data_Rtsne <- data[ix, cols_to_use]
+data_Rtsne <- data[ix, marker_cols]
 data_Rtsne <- as.matrix(data_Rtsne)
 
-class(data_Rtsne)
 head(data_Rtsne)
 dim(data_Rtsne)
 
-
-# remove near-duplicate rows (required by Rtsne)
-
+# remove any near-duplicate rows (required by Rtsne)
 dups <- duplicated(data_Rtsne)
 data_Rtsne <- data_Rtsne[!dups, ]
 
@@ -176,7 +157,9 @@ dim(data_Rtsne)
 
 
 # run Rtsne (Barnes-Hut-SNE algorithm; runtime ~2 min)
-# without PCA step (see Amir et al. 2013, Online Methods, "viSNE analysis")
+
+# note initial PCA step is not required, since we do not have too many
+# dimensions (i.e. not thousands, which may be the case in other domains)
 
 set.seed(123)
 out_Rtsne <- Rtsne(data_Rtsne, pca = FALSE, verbose = TRUE)
@@ -188,7 +171,7 @@ out_Rtsne <- Rtsne(data_Rtsne, pca = FALSE, verbose = TRUE)
 ### CREATE PLOT ###
 ###################
 
-# load cluster labels from FlowSOM (if not still loaded)
+# load cluster labels (if not still loaded)
 file_labels <- "results/cluster_labels_FlowSOM.txt"
 data_labels <- read.table(file_labels, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 labels <- data_labels[, "cluster"]
@@ -211,7 +194,7 @@ head(data_plot)
 # plot 2D t-SNE projection
 
 ggplot(data_plot, aes(x = tSNE_1, y = tSNE_2, color = cluster)) + 
-  geom_point(size = 0.75, alpha = 0.5) + 
+  geom_point(size = 0.2) + 
   coord_fixed(ratio = 1) + 
   ggtitle("t-SNE projection with FlowSOM clustering") + 
   theme_bw()
