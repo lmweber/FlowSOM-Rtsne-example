@@ -85,7 +85,7 @@ data_FlowSOM <- flowCore::flowFrame(data)
 
 # set seed for reproducibility
 
-set.seed(123)
+set.seed(1234)
 
 # run FlowSOM (initial steps prior to meta-clustering)
 
@@ -108,8 +108,19 @@ k <- 40
 
 # run meta-clustering
 
-set.seed(123)
-out <- FlowSOM::metaClustering_consensus(out$map$codes, k = k)
+# note: In the current version of FlowSOM, the meta-clustering function 
+# FlowSOM::metaClustering_consensus() does not pass along the seed argument 
+# correctly, so results are not reproducible. We use the internal function 
+# ConsensusClusterPlus::ConsensusClusterPlus() to get around this. However, this
+# will be fixed in the next update of FlowSOM (version 1.5); then the following 
+# (simpler) code can be used instead:
+#seed <- 1234
+#out <- FlowSOM::metaClustering_consensus(out$map$codes, k = k, seed = seed)
+
+seed <- 1234
+out <- ConsensusClusterPlus::ConsensusClusterPlus(t(out$map$codes), maxK = k, seed = seed)
+out <- out[[k]]$consensusClass
+
 
 # extract cluster labels from output object
 
@@ -138,7 +149,7 @@ write.table(res, file = "results/cluster_labels_FlowSOM.txt",
 
 n_sub <- 10000
 
-set.seed(123)
+set.seed(1234)
 ix <- sample(1:length(labels), n_sub)
 
 # prepare data for Rtsne (matrix format required)
@@ -162,7 +173,7 @@ dim(data_Rtsne)
 # note initial PCA is not required, since we do not have too many dimensions
 # (i.e. not thousands, which may be the case in other domains)
 
-set.seed(123)
+set.seed(1234)
 out_Rtsne <- Rtsne(data_Rtsne, pca = FALSE, verbose = TRUE)
 
 
