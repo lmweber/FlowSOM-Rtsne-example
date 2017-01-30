@@ -7,7 +7,7 @@ This repository contains a worked example showing how to cluster and visualize a
 
 FlowSOM is an R/Bioconductor package for clustering flow cytometry and mass cytometry (CyTOF) data (see [paper](http://www.ncbi.nlm.nih.gov/pubmed/25573116) and [Bioconductor package](http://bioconductor.org/packages/release/bioc/html/FlowSOM.html)). The clustering algorithm is based on self-organizing maps and hierarchical consensus meta-clustering.
 
-We previously showed that FlowSOM performs very well for clustering high-dimensional CyTOF data, and in particular has extremely fast runtimes (see [bioRxiv preprint](http://biorxiv.org/content/early/2016/09/08/047613) and [code repository](https://github.com/lmweber/cytometry-clustering-comparison)).
+We previously showed that FlowSOM performs very well for clustering high-dimensional CyTOF data, and in particular has extremely fast runtimes (see [paper published in Cytometry Part A](http://onlinelibrary.wiley.com/doi/10.1002/cyto.a.23030/full) and [code repository](https://github.com/lmweber/cytometry-clustering-comparison)).
 
 
 ## Rtsne and t-SNE
